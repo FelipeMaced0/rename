@@ -1,4 +1,4 @@
-module renamer
+module rename
 
 go 1.22.0
 

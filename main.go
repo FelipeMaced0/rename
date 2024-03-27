@@ -1,10 +1,9 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2024 Felipe Jesus Macedo
 */
 package main
 
-import "renamer/cmd"
+import "rename/cmd"
 
 func main() {
 	cmd.Execute()

@@ -14,13 +14,14 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "renamer [options] [flags]",
+	Use:   "rename [options] [flags]",
 	Short: "Rename your files to a certain pattern and be a happy programmer",
 	Long:  `Renamer is meant to make your life easier when renaming files in bulk to conform to a certain pattern`,
 	// Uncomment the following line if your bare application
@@ -56,13 +57,13 @@ func init() {
 	var limit *int32
 
 	var rename = &cobra.Command{
-		Use:   "rename",
-		Short: "rename the files",
+		Use:   "bulk",
+		Short: "bulk rename files",
 		Long:  ``,
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		Run: func(cmd *cobra.Command, args []string) {
-
+			currentSeparetor = ""
 			var count int32 = 0
 
 			err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
@@ -84,14 +85,12 @@ func init() {
 				dir, file := filepath.Split(path)
 				ext := filepath.Ext(path)
 
+				currentSeparetor = guessSeparetor(file)
+
 				var oldShortname string = file
 
 				// remove extension from file name
 				file = strings.Replace(file, ext, "", 1)
-
-				if currentSeparetor == "" {
-					currentSeparetor = guessSeparetor(file)
-				}
 
 				if prefix != "" {
 					file = prefix + replaceSeparetor + file
@@ -115,9 +114,12 @@ func init() {
 					file = strings.ReplaceAll(temp, " ", currentSeparetor)
 				}
 
-				file = replaceSpacesWithDashes(file, currentSeparetor, replaceSeparetor)
+				if ascii {
+					file = removeAccents(file)
+				}
 
-				file = removeAccents(file)
+				fmt.Print(replaceSeparetor)
+				file = strings.ReplaceAll(file, currentSeparetor, replaceSeparetor)
 
 				/*TODO
 				check the final file name length before attempt to rename
@@ -194,21 +196,9 @@ func init() {
 	rootCmd.AddCommand(rename)
 }
 
-func replaceSpacesWithDashes(fileName string, currentSeparetor string, replaceSeparetor string) string {
-	pattern := currentSeparetor + "+"
-
-	regex, err := regexp.Compile(pattern)
-	if err != nil {
-		fmt.Println("Error compiling regex: ", err)
-		return fileName
-	}
-	return regex.ReplaceAllString(fileName, replaceSeparetor)
-}
-
 func removeAccents(s string) string {
-	t := transform.Chain(norm.NFD, transform.RemoveFunc(func(r rune) bool {
-		return unicode.Is(unicode.Mn, r) // Mn: non-spacing marks
-	}), norm.NFC)
+
+	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
 
 	sanitized, _, _ := transform.String(t, s)
 
