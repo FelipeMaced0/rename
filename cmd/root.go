@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -54,7 +55,7 @@ func init() {
 	var replaceSeparetor string
 	var currentSeparetor string
 
-	var limit *int32
+	var limit int32
 
 	var rename = &cobra.Command{
 		Use:   "bulk",
@@ -67,17 +68,17 @@ func init() {
 			var count int32 = 0
 
 			err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
-				count++
 
 				if err != nil {
 					return err
 				}
+
 				// Check if it's a regular file
 				if !info.Mode().IsRegular() {
 					return nil
 				}
 
-				if !all && (count == (*limit)) {
+				if limit > 0 && (count >= limit) {
 					return nil
 				}
 
@@ -118,7 +119,6 @@ func init() {
 					file = removeAccents(file)
 				}
 
-				fmt.Print(replaceSeparetor)
 				file = strings.ReplaceAll(file, currentSeparetor, replaceSeparetor)
 
 				/*TODO
@@ -134,7 +134,10 @@ func init() {
 					if err := os.Rename(path, newFileName); err != nil {
 						return err
 					}
-					fmt.Printf("from %s to %s\n", oldShortname, file)
+					color.New(color.FgWhite).Print("From ")
+					color.New(color.FgBlue).Printf("%s", oldShortname)
+					color.New(color.FgWhite).Print(" to ")
+					color.New(color.FgGreen).Printf("%s\n", file)
 				}
 
 				if copyPath != "" {
@@ -162,6 +165,8 @@ func init() {
 
 				}
 
+				count++
+
 				return nil
 			})
 
@@ -174,19 +179,22 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rename.PersistentFlags().BoolVarP(&toLower, "lower", "l", false, "Tells whether or not files names should be on lowercase letters")
-	rename.PersistentFlags().BoolVarP(&toUpper, "upper", "u", false, "Tells whether or not files names should be on uppercase letters")
-	rename.PersistentFlags().BoolVarP(&toTitle, "title", "t", false, "Tells whether or not files names should be title case")
+	rename.PersistentFlags().BoolVarP(&toLower, "lower", "l", false, "Rename to lowercase case")
+	rename.PersistentFlags().BoolVarP(&toUpper, "upper", "u", false, "Rename to uppercase case")
+	rename.PersistentFlags().BoolVarP(&toTitle, "title", "t", false, "Rename to title case")
 	rename.PersistentFlags().BoolVar(&inplace, "inplace", false, "Rename file inplace(possible loss of information)")
 	rename.PersistentFlags().BoolVar(&ascii, "ascii", false, "Rename to ascii only characters")
-	rename.PersistentFlags().BoolVarP(&all, "all", "a", false, "Process all files")
-	rename.PersistentFlags().StringVar(&copyPath, "copy-path", "", "Copy files to destination folder with new names")
+	rename.PersistentFlags().BoolVarP(&all, "all", "a", false, "Rename all files")
+	rename.PersistentFlags().StringVarP(&copyPath, "copy-path", "c", "", "Copy files to destination folder with new names(recommended)")
 	rename.PersistentFlags().StringVarP(&path, "path", "p", "", "Path of your folder containing the files that sould be renamed")
 	rename.PersistentFlags().StringVarP(&replaceSeparetor, "replace-separetor", "r", "_", "Separetor to put between words on file name")
-	rename.PersistentFlags().StringVarP(&currentSeparetor, "current-separetor", "c", "", "Separetor to search between words on file name and replace with [replace-separetor]")
-	rename.PersistentFlags().StringVar(&prefix, "prefix", "", "Prefix to add at the begin of every file")
-	rename.PersistentFlags().StringVar(&suffix, "suffix", "", "Suffix to add at the end of every file")
-	limit = rename.PersistentFlags().Int32("limit", 5, "Limit to processed files")
+	rename.PersistentFlags().StringVar(&prefix, "prefix", "", "Add at the begin of every file")
+	rename.PersistentFlags().StringVar(&suffix, "suffix", "", "Add at the end of every file")
+	rename.PersistentFlags().Int32Var(&limit, "limit", 0, "Limit to amount of renamed files")
+
+	rename.MarkFlagsMutuallyExclusive("lower", "upper", "title")
+	rename.MarkFlagsOneRequired("inplace", "copy-path")
+	rename.MarkFlagsOneRequired("limit", "all")
 
 	rename.MarkPersistentFlagRequired("path")
 
