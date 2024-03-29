@@ -6,7 +6,7 @@ For it to work properly is necessary to have go installed on your machine. Head 
 
 ## Build
 
-No magic her, just run `go build` on inside folder
+No magic here, just run `go build` inside the project's folder
 
 ## Usage
 
