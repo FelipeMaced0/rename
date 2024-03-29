@@ -17,18 +17,18 @@ Usage:
   rename bulk [flags]
 
 Flags:
-  -a, --all                        Process all files
+  -a, --all                        Rename all files
       --ascii                      Rename to ascii only characters
-      --copy-path string           Copy files to destination folder with new names
-  -c, --current-separetor string   Separetor to search between words on file name and replace with [replace-separetor]
+      --auto-separetor             Guess separetor and replace with _
+  -c, --copy-path string           Copy files to destination folder with new names(recommended)
   -h, --help                       help for bulk
       --inplace                    Rename file inplace(possible loss of information)
-      --limit int32                Limit to processed files (default 5)
-  -l, --lower                      Tells whether or not files names should be on lowercase letters
+      --limit int32                Limit of renamed files
+  -l, --lower                      Rename to lowercase case
   -p, --path string                Path of your folder containing the files that sould be renamed
-      --prefix string              Prefix to add at the begin of every file
+      --prefix string              Add at the begin of every file
   -r, --replace-separetor string   Separetor to put between words on file name (default "_")
-      --suffix string              Suffix to add at the end of every file
-  -t, --title                      Tells whether or not files names should be title case
-  -u, --upper                      Tells whether or not files names should be on uppercase letters
+      --suffix string              Add at the end of every file
+  -t, --title                      Rename to title case
+  -u, --upper                      Rename to uppercase case
 ```

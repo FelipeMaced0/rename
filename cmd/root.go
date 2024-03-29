@@ -45,7 +45,7 @@ func init() {
 	var toTitle bool
 	var ascii bool
 	var all bool
-
+	var autoSeparetor bool
 	var inplace bool
 
 	var prefix string
@@ -54,6 +54,8 @@ func init() {
 	var copyPath string
 	var replaceSeparetor string
 	var currentSeparetor string
+	//var search string
+	//var replace string
 
 	var limit int32
 
@@ -119,7 +121,9 @@ func init() {
 					file = removeAccents(file)
 				}
 
-				file = strings.ReplaceAll(file, currentSeparetor, replaceSeparetor)
+				if autoSeparetor {
+					file = strings.ReplaceAll(file, currentSeparetor, replaceSeparetor)
+				}
 
 				/*TODO
 				check the final file name length before attempt to rename
@@ -185,12 +189,13 @@ func init() {
 	rename.PersistentFlags().BoolVar(&inplace, "inplace", false, "Rename file inplace(possible loss of information)")
 	rename.PersistentFlags().BoolVar(&ascii, "ascii", false, "Rename to ascii only characters")
 	rename.PersistentFlags().BoolVarP(&all, "all", "a", false, "Rename all files")
+	rename.PersistentFlags().BoolVar(&autoSeparetor, "auto-separetor", false, "Guess separetor and replace with _")
 	rename.PersistentFlags().StringVarP(&copyPath, "copy-path", "c", "", "Copy files to destination folder with new names(recommended)")
 	rename.PersistentFlags().StringVarP(&path, "path", "p", "", "Path of your folder containing the files that sould be renamed")
 	rename.PersistentFlags().StringVarP(&replaceSeparetor, "replace-separetor", "r", "_", "Separetor to put between words on file name")
 	rename.PersistentFlags().StringVar(&prefix, "prefix", "", "Add at the begin of every file")
 	rename.PersistentFlags().StringVar(&suffix, "suffix", "", "Add at the end of every file")
-	rename.PersistentFlags().Int32Var(&limit, "limit", 0, "Limit to amount of renamed files")
+	rename.PersistentFlags().Int32Var(&limit, "limit", 0, "Limit of renamed files")
 
 	rename.MarkFlagsMutuallyExclusive("lower", "upper", "title")
 	rename.MarkFlagsOneRequired("inplace", "copy-path")
