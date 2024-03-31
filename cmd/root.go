@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/barasher/go-exiftool"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/cases"
@@ -47,6 +48,12 @@ func init() {
 	var all bool
 	var autoSeparetor bool
 	var inplace bool
+	var attachFileSize bool
+	var attachImageSize bool
+	var attachVideoDuration bool
+	var attachAuthor bool
+	var attachTitle bool
+	var attachCreateDate bool
 
 	var prefix string
 	var suffix string
@@ -125,6 +132,67 @@ func init() {
 					file = strings.ReplaceAll(file, currentSeparetor, replaceSeparetor)
 				}
 
+				if attachFileSize {
+					metaData := fileMetaDeta(path)
+
+					if metaData["FileSize"] != nil {
+						fileSize := metaData["FileSize"].(string)
+						fileSize = removeForbidenCharacters(fileSize)
+						file = file + replaceSeparetor + fileSize
+					}
+				}
+
+				if attachImageSize {
+					metaData := fileMetaDeta(path)
+
+					if metaData["ImageSize"] != nil {
+						ImageSize := metaData["ImageSize"].(string)
+						file = file + replaceSeparetor + ImageSize
+					}
+				}
+
+				if attachVideoDuration {
+					metaData := fileMetaDeta(path)
+
+					if metaData["Duration"] != nil {
+						videoDuration := metaData["Duration"].(string)
+						videoDuration = removeForbidenCharacters(videoDuration)
+						file = file + replaceSeparetor + videoDuration
+
+					}
+
+				}
+
+				if attachAuthor {
+					metaData := fileMetaDeta(path)
+
+					if metaData["Author"] != nil {
+						author := metaData["Author"].(string)
+						author = removeForbidenCharacters(author)
+						file = file + replaceSeparetor + author
+					}
+				}
+
+				if attachTitle {
+					metaData := fileMetaDeta(path)
+
+					if metaData["Title"] != nil {
+						author := metaData["Title"].(string)
+						author = removeForbidenCharacters(author)
+						file = file + replaceSeparetor + author
+					}
+				}
+
+				if attachCreateDate {
+					metaData := fileMetaDeta(path)
+
+					if metaData["CreateDate"] != nil {
+						createDate := metaData["CreateDate"].(string)
+						createDate = strings.Split(createDate, " ")[0]
+						createDate = strings.ReplaceAll(createDate, ":", "_")
+						file = file + replaceSeparetor + createDate
+					}
+				}
 				/*TODO
 				check the final file name length before attempt to rename
 				*/
@@ -190,6 +258,13 @@ func init() {
 	rename.PersistentFlags().BoolVar(&ascii, "ascii", false, "Rename to ascii only characters")
 	rename.PersistentFlags().BoolVarP(&all, "all", "a", false, "Rename all files")
 	rename.PersistentFlags().BoolVar(&autoSeparetor, "auto-separetor", false, "Guess separetor and replace with _")
+	rename.PersistentFlags().BoolVar(&attachFileSize, "file-size", false, "Attach file size to file name")
+	rename.PersistentFlags().BoolVar(&attachImageSize, "dimension", false, "Attach image size to file name WidthxHeight")
+	rename.PersistentFlags().BoolVar(&attachVideoDuration, "duration", false, "Attach video duration")
+	rename.PersistentFlags().BoolVar(&attachAuthor, "author", false, "Attach Author(Generally in text file)")
+	rename.PersistentFlags().BoolVar(&attachTitle, "attach-title", false, "Attach Title(Generally in text file)")
+	rename.PersistentFlags().BoolVar(&attachCreateDate, "create-date", false, "Attach create date")
+
 	rename.PersistentFlags().StringVarP(&copyPath, "copy-path", "c", "", "Copy files to destination folder with new names(recommended)")
 	rename.PersistentFlags().StringVarP(&path, "path", "p", "", "Path of your folder containing the files that sould be renamed")
 	rename.PersistentFlags().StringVarP(&replaceSeparetor, "replace-separetor", "r", "_", "Separetor to put between words on file name")
@@ -209,6 +284,10 @@ func init() {
 	rootCmd.AddCommand(rename)
 }
 
+func removeForbidenCharacters(s string) string {
+	return regexp.MustCompile(`[^a-zA-Z0-9]`).ReplaceAllString(s, "_")
+}
+
 func removeAccents(s string) string {
 
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
@@ -224,8 +303,7 @@ func guessSeparetor(s string) string {
 	regex, err := regexp.Compile(pattern)
 
 	if err != nil {
-		fmt.Println("Error guessing")
-		return "asss"
+		panic("Error guessing")
 	}
 
 	matches := regex.FindAllString(s, -1)
@@ -248,4 +326,27 @@ func guessSeparetor(s string) string {
 	}
 
 	return mostOccurringChar
+}
+
+func fileMetaDeta(filePath string) map[string]interface{} {
+	et, err := exiftool.NewExiftool()
+	if err != nil {
+		fmt.Printf("Error when intializing: %v\n", err)
+		return nil
+	}
+	defer et.Close()
+
+	fileInfos := et.ExtractMetadata(filePath)
+
+	for _, fileInfo := range fileInfos {
+		if fileInfo.Err != nil {
+			fmt.Printf("Error concerning %v: %v\n", fileInfo.File, fileInfo.Err)
+			continue
+		}
+
+		return fileInfo.Fields
+
+	}
+
+	return nil
 }

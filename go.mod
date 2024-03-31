@@ -3,6 +3,7 @@ module rename
 go 1.22.0
 
 require (
+	github.com/barasher/go-exiftool v1.10.0
 	github.com/spf13/cobra v1.8.0
 	golang.org/x/text v0.14.0
 )
